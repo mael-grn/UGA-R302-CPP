@@ -23,9 +23,14 @@ void minMaxIter(const vector<T> v, T &min, T &max, int &nbComp) {
     //                   max = plus grande valeur de v,
     //                   nbcomp = nombre de comparaisons impliquant au moins un élément de v}
 
-    /*
-    * À COMPLETER
-    */
+    for (auto val : v) {
+        if (val < min) {
+            min = val;
+        } else if (val > max) {
+            max=val;
+        }
+        nbComp++;
+    }
 
 }
 
@@ -34,10 +39,30 @@ void minMaxRec(const vector<T>& v, int inf, int sup, T &min, T &max, int &nbComp
     // {v.size()≥ 1} => {min = plus petite valeur de v sur l'intervalle [inf..sup],
     //                   max = plus grande valeur de v sur l'intervalle [inf..sup],
     //                   nbcomp = nombre de comparaisons impliquant au moins un élément de v}
-
     /*
-    * À COMPLETER
+    if (!v.empty()) {
+        nbComp++;
+        if (v[v.size()-1] > max) {
+            max=v[v.size()-1];
+        } else if (v[v.size()-1] < min) {
+            min=v[v.size()-1];
+        }
+        vector<T> temp = v;
+        temp.pop_back();
+        minMaxRec(temp, inf, sup, min, max, nbComp);
+    }
     */
+    if (inf == sup){
+        min=v[inf];
+        max=v[sup];
+    } else {
+
+    }
+
+    minMaxRec(v, inf, sup/2-1, min, max, nbComp);
+    minMaxRec(v, sup/2, sup-1, min, max, nbComp);
+
+
 
 }
 
