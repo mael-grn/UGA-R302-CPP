@@ -36,18 +36,26 @@ int factorielleRecNbMults(const int n, int &cpt) {
 
 void hanoi(int nbDisques, char depart, char intermediaire, char arrivee) {
     // {n ≥ 1} => {affiche les déplacements à effectuer pour résoudre le pb}
-    /*
-     * À COMPLETER
-     */
 
+     if (nbDisques <= 1) {
+         cout << "disque " << nbDisques << " du piquet " << depart << " au piquet " << arrivee << "\n";
+     } else {
+         hanoi(nbDisques-1, depart, arrivee, intermediaire);
+         cout << "disque " << nbDisques << " du piquet " << depart << " au piquet " << arrivee << "\n";
+         hanoi(nbDisques-1, intermediaire, depart, arrivee);
+     }
 }
 
 void hanoiNbDeplacements (int nbDisques, char depart, char intermediaire, char arrivee, int& cpt) {
     // {n ≥ 1} => {affiche les déplacements à effectuer pour résoudre le pb ;
     // cpt permet de compter le nombre de déplacements effectués pour résoudre le problème}
-    /*
-     * À COMPLETER
-     */
+    if (nbDisques <= 1) {
+        cpt++;
+    } else {
+        cpt ++;
+        hanoiNbDeplacements(nbDisques-1, depart, arrivee, intermediaire, cpt);
+        hanoiNbDeplacements(nbDisques-1, intermediaire, depart, arrivee, cpt);
+    }
 
 }
 
