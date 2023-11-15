@@ -6,9 +6,14 @@ using namespace std;
 
 double puissance(float x, int n) {
 // {n >= 0} => {résultat = x élevé à la puissance n}
-    /*
-    * À COMPLETER
-    */
+    if ( n==0) {
+        return 0.0;
+    }
+    else if (n == 1) {
+        return x;
+    } else {
+        return x*puissance(x, n-1);
+    }
 
     // supprimer à partir de cette ligne après complétion
     return 0;
@@ -20,7 +25,17 @@ double puissanceNbMult(float x, int n, int &nbmult) {
     /*
     * À COMPLETER
     */
-
+    if ( n==0) {
+        nbmult++;
+        return 0.0;
+    }
+    else if (n == 1) {
+        nbmult++;
+        return x;
+    } else {
+        nbmult++;
+        return x*puissanceNbMult(x, n-1, nbmult);
+    }
     // supprimer à partir de cette ligne après complétion
     return 0;
 }
@@ -31,6 +46,21 @@ double puissanceDrNbMult(float x, int n, int &nbmult) {
     /*
     * À COMPLETER
     */
+    if (n==0) {
+        return 1;
+    } else if (n==1) {
+        return x;
+    } else if (n>1 & n%2 ==0) {
+        n = n/2;
+        nbmult++;
+        double temp = puissanceDrNbMult(x, n, nbmult);
+        return temp*temp;
+    } else if (n>1 & n%2 ==1){
+        nbmult++;
+        n = n/2;
+        double temp = puissanceDrNbMult(x, n, nbmult);
+        return x*temp*temp;
+    }
 
     // supprimer à partir de cette ligne après complétion
     return 0;
