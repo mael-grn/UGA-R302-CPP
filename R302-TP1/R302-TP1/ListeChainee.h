@@ -260,11 +260,27 @@ TypeInfo ListeChainee<TypeInfo>::getInfoAtPositRec(const int position) const thr
 // VERSION SANS CONTRÔLE AVANT : tous les contrôles sont inclus dans l'algorithme
 template<class TypeInfo>
 bool ListeChainee<TypeInfo>::supprimeAtPositIter(int position) {
-    /*
-     * À COMPLETER
-     */
-    // supprimer à partir d'ici après complétion
-    return false;
+    if (position==1) {
+        supprimeTete();
+        return true;
+    }
+    Cellule<TypeInfo> *&cellCour = this->ptrTete;
+    while (position != 2) {
+        cellCour = cellCour->getRefSuivante();
+        position -=1;
+    }
+    
+    Cellule<TypeInfo> *temp = cellCour->getSuivante();
+
+    if (cellCour->getRefSuivante()->getRefSuivante() != NULL) {
+        cellCour->setSuivante(cellCour->getRefSuivante()->getRefSuivante());
+    }
+    delete temp;
+    this->nbCellules -=1;
+    return true;
+
+
+
 } // end supprimeAtPositIter
 
 // Utilisation du Worker récusif
@@ -355,9 +371,14 @@ void ListeChainee<TypeInfo>::insereAtPositRecWorker(Cellule<TypeInfo>*& ptrCette
 // Noter que le premier paramètre est une référence sur un pointeur qui n'est pas const donc un paramètre résultat
 template<class TypeInfo>
 void ListeChainee<TypeInfo>::supprimeAtPositRecWorker(Cellule<TypeInfo>*& ptrCetteListe, int position) {
-    /*
-     * À COMPLETER
-     */
+    if (position == 1) {
+        Cellule<TypeInfo> *temp = ptrCetteListe;
+        ptrCetteListe = ptrCetteListe->getRefSuivante();
+        delete temp;
+        this->nbCellules-=1;
+    } else {
+        supprimeAtPositRecWorker(ptrCetteListe->getRefSuivante(), position-1);
+    }
 } // end supprimeAtPositRecProcWorker
 
 /****************************************************************************
