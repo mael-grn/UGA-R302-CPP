@@ -77,22 +77,35 @@ void Mondial::printCountriesCode() const {
  * A COMPLETER
  */
 int Mondial::getNbDeserts() const {
-    /*
-     * A COMPLETER
-     */
+    int nb =0;
+    XMLElement* desert = racineMondial->FirstChildElement("desertscategory");
+    XMLElement* currentDesert = desert->FirstChildElement();
+
+    while (currentDesert != nullptr) {
+        nb+=1;
+        currentDesert = currentDesert->NextSiblingElement();
+    }
     // supprimer à partir d'ici après complétion
-    return 0;
+    return nb;
 }
 
 /*
  * A COMPLETER
  */
 int Mondial::getNbElemCat(const string categoryName) {
-    /*
-     * A COMPLETER
-     */
+    int nb =0;
+    //conversion de categoryName de string vers const char*
+    const char* cat = (categoryName + "category").c_str();
+    //gros probleme : les noms en parametres (dans les tests) sont en francais. Or, on recherce des nom en anglais. Traduire le parametre ?
+    XMLElement* elemCat = racineMondial->FirstChildElement(cat);
+    XMLElement* currentElemCat = elemCat->FirstChildElement();
+
+    while (currentElemCat != nullptr) {
+        nb+=1;
+        currentElemCat = currentElemCat->NextSiblingElement();
+    }
     // supprimer à partir d'ici après complétion
-    return 0;
+    return nb;
 }
 
 /*
