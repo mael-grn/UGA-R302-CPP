@@ -1,5 +1,0 @@
-C:/Users/maelg/OneDrive/Documents/Documents/IUT/S3/R3.02/R302-TP1/R302-TP1/cmake-build-debug/CMakeFiles/exercice1.dir
-C:/Users/maelg/OneDrive/Documents/Documents/IUT/S3/R3.02/R302-TP1/R302-TP1/cmake-build-debug/CMakeFiles/exercice2.dir
-C:/Users/maelg/OneDrive/Documents/Documents/IUT/S3/R3.02/R302-TP1/R302-TP1/cmake-build-debug/CMakeFiles/exercice3.dir
-C:/Users/maelg/OneDrive/Documents/Documents/IUT/S3/R3.02/R302-TP1/R302-TP1/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/maelg/OneDrive/Documents/Documents/IUT/S3/R3.02/R302-TP1/R302-TP1/cmake-build-debug/CMakeFiles/rebuild_cache.dir

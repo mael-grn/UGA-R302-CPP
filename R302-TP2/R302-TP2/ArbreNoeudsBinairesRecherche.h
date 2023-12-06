@@ -183,11 +183,20 @@ public:
 
 template<class TypeInfo>
 int ArbreNoeudBinaireRecherche<TypeInfo>::getHauteurRecWorker(NoeudBinaire<TypeInfo>* ptrRac) const {
-    /*
-     * A COMPLETER
-     */
+    if (ptrRac == nullptr) {
+        return 0;
+    } else {
+        int droite = 1+ getHauteurRecWorker(ptrRac->getPtrFilsDroit());
+        int gauche = 1+ getHauteurRecWorker(ptrRac->getPtrFilsGauche());
+        if (droite >= gauche) {
+            return droite;
+        } else {
+            return gauche;
+        }
+
+    }
     // supprimer à partir de cette ligne après complétion
-    return 0;
+
 } // end getHauteurRecWorker
 
 template<class TypeInfo>
@@ -235,19 +244,25 @@ NoeudBinaire<TypeInfo>* ArbreNoeudBinaireRecherche<TypeInfo>::copieArbre(const N
 
 template<class TypeInfo>
 void ArbreNoeudBinaireRecherche<TypeInfo>::insertRecWorker(NoeudBinaire<TypeInfo>*& ptrRac, const TypeInfo& nouvelleInfo) {
-    /*
-     * A COMPLETER
-     */
+    if (ptrRac == nullptr) {
+        ptrRac = new NoeudBinaire<TypeInfo>(nouvelleInfo);
+    } else if (ptrRac->getInfo() <= nouvelleInfo) {
+        insertRecWorker(ptrRac->getRefPtrFilsDroit(), nouvelleInfo);
+    } else if (ptrRac->getInfo() > nouvelleInfo) {
+        insertRecWorker(ptrRac->getRefPtrFilsGauche(), nouvelleInfo);
+    }
 } // end insertRecWorker
 
 template<class TypeInfo>
 TypeInfo ArbreNoeudBinaireRecherche<TypeInfo>::getAncetreCommunLePlusBasRecWorker(const NoeudBinaire<TypeInfo>* ptrRac,
                                                                                   const TypeInfo val1, const TypeInfo val2) const {
-    /*
-       * A COMPLETER
-       */
-    // supprimer à partir de cette ligne après complétion
-    return 0;
+    if (val1 <= ptrRac->getInfo() & val2 > ptrRac->getInfo()) {
+        return ptrRac->getInfo();
+    } else if (val1 <= ptrRac->getInfo()) {
+        getAncetreCommunLePlusBasRecWorker(ptrRac->getPtrFilsGauche(), val1, val2);
+    } else {
+        getAncetreCommunLePlusBasRecWorker(ptrRac->getPtrFilsDroit(), val1, val2);
+    }
 }
 
 /**
@@ -375,11 +390,14 @@ bool ArbreNoeudBinaireRecherche<TypeInfo>::estInfoPresenteRecWorker(NoeudBinaire
 
 template<class TypeInfo>
 bool ArbreNoeudBinaireRecherche<TypeInfo>::aMemeGeometrieQueRecWorker(const NoeudBinaire<TypeInfo>* monPtrRac, const NoeudBinaire<TypeInfo>* sonPtrRac) const {
-    /*
-     * A COMPLETER
-     */
-    // supprimer à partir de cette ligne après complétion
-    return false;
+    if (monPtrRac == nullptr & sonPtrRac == nullptr) {
+        return true;
+    } else if (monPtrRac == nullptr | sonPtrRac == nullptr) {
+        return false;
+    } else {
+        return aMemeGeometrieQueRecWorker(monPtrRac->getPtrFilsGauche(), sonPtrRac->getPtrFilsGauche()) &
+                aMemeGeometrieQueRecWorker(monPtrRac->getPtrFilsDroit(), sonPtrRac->getPtrFilsDroit());
+    }
 }
 
 template<class TypeInfo>
@@ -398,18 +416,28 @@ bool ArbreNoeudBinaireRecherche<TypeInfo>::estEgalARecWorker(const NoeudBinaire<
  */
 template<class TypeInfo>
 TypeInfo ArbreNoeudBinaireRecherche<TypeInfo>::getMaxRecWorker(const NoeudBinaire<TypeInfo>* ptrRac) const {
-    /*
-     * A COMPLETER
-     */
+
+    if (ptrRac->getPtrFilsDroit() == nullptr) {
+        return ptrRac->getInfo();
+    } else {
+        getMaxRecWorker(ptrRac->getPtrFilsDroit());
+    }
+
     // supprimer à partir de cette ligne après complétion
-    return 0;
 }
 
 template<class TypeInfo>
+//attention, pour bien comprendre la fonction et les parametres, lire :
+//    "est ce que CetArbre a pour sous arbre UnArbre ?"
 bool ArbreNoeudBinaireRecherche<TypeInfo>::aPourSousArbreRecWorker(const NoeudBinaire<TypeInfo>* ptrRacCetArbre, const NoeudBinaire<TypeInfo>* ptrRacUnArbre) const {
-    /*
-     * A COMPLETER
-     */
+    if (ptrRacCetArbre == nullptr | ptrRacUnArbre == nullptr) {
+        return false;
+    } else if (ptrRacCetArbre->getInfo() == ptrRacUnArbre->getInfo()) {
+        return true & aPourSousArbreRecWorker(ptrRacCetArbre->getPtrFilsDroit(), ptrRacUnArbre->getPtrFilsDroit()) &
+                aPourSousArbreRecWorker(ptrRacCetArbre->getPtrFilsGauche(), ptrRacUnArbre->getPtrFilsGauche());
+    }
+
+
     // supprimer à partir de cette ligne après complétion
     return false;
 }
