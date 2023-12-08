@@ -85,6 +85,14 @@ private:
 
     XMLElement* getRiverXmlelementFromNameIter(string riverName) const;
 
+    XMLElement* getXmlelementFromName(XMLElement* xmlLevel, string name) const;
+
+    XMLElement* getXmlelementFromAttribute(XMLElement* xmlLevel, string attribute, string id) const;
+
+    XMLElement* getCityXmlelementFromName(string cityName) const;
+
+    void printProvinceFromCountryInProvinceList(XMLElement* country, vector<string> provinceCode) const;
+
     // Procédures de découpage des chaînes en mots
 
     template<typename Out>
