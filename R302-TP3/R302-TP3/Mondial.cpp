@@ -173,7 +173,7 @@ XMLElement* Mondial::getCountryXmlelementFromNameIter(string countryName) const 
     //on recupere l'element (balise) "countriescategory". Celle contient tous les pays.
     XMLElement* countriesCategory = racineMondial->FirstChildElement("countriescategory");
     //premier enfant de la "balise" countries category. Celui ci correspond au premier pays de la liste de pays.
-    return getXmlelementFromName(countriesCategory, countryName);
+    return getAbsoluteXmlelementFromNameRec(countriesCategory, countryName);
 }
 
 /**
@@ -361,20 +361,61 @@ void Mondial::printCityInformation(string cityName) const {
  * @param cityName le nom de la ville recherchée
  * @return un pointeur vers un élément XML de la ville
  */
-XMLElement *Mondial::getCityXmlelementFromName(std::string cityName) const {
+vector<string> *Mondial::getCityInformationsFromName(std::string cityName) const {
     //variable pour arreter la boucle lorsque l'element est trouve
     bool elementTrouve = false;
+    //liste de retour. Liste de tuple, contenant les infos de la ville (ex = name : paris)
+    vector<tuple<string, string>> cityInfo;
     //on recupere l'element (balise) "countriescategory". Celle contient tous les pays.
     XMLElement* countriesCategory = racineMondial->FirstChildElement("countriescategory");
     XMLElement* country = countriesCategory->FirstChildElement();
     //parcours des pays, tant qu'on a pas trouvé ce qu'on cherche
     while (country != nullptr && !elementTrouve) {
-
+        //recuperer la ville dans le pays
+        XMLElement* city = getCityOfCountryXMLelementFromName(country, cityName);
+        //si la ville a été trouvée dans le pays
+        if (city != nullptr) {
+            //ajouter les informations de la ville au tableau de résultat
+            //conversion du resultat en string avant de l'ajouter, car sinon la concatenation est impossible
+            cityInfo.emplace_back("name", string(city->FirstChildElement("name")->GetText()));
+            cityInfo.emplace_back("country", string(country->FirstChildElement("name")->GetText()));
+            cityInfo.emplace_back("latitude", string(city->FirstChildElement("latitude")->GetText()));
+            cityInfo.emplace_back("longitude", string(city->FirstChildElement("longitude")->GetText()));
+            cityInfo.emplace_back("population", string(city->LastChildElement("population")->GetText()));
+        }
     }
 }
 
 /**
- * parcours de tous les enfant de XMLLevel
+ * verifie si une ville se trouve dans un pays en particulier
+ * @param country  l'element XML correspondant au pays dans laquelle on recherche une ville
+ * @param cityName le nom de la ville que l'ont recherche
+ * @return l'element xml de la ville recherché si celle ci est trouvée, nullptr sinon
+ */
+XMLElement* Mondial::getCityOfCountryXMLelementFromName(tinyxml2::XMLElement *country, std::string cityName) const {
+    //variable indiquant si l'element est trouvé
+    bool elementTrouve = false;
+    //premier element enfant du pays ayant pour nom province
+    XMLElement* countryElem = country->FirstChildElement("province");
+    //variable qui contiendra la ville si celle ci est trouvée. sinon contient nullptr
+    XMLElement* city;
+    //on parcours tous les elements de type province, tant qu'on a pas trouvé ce qu'on cherche
+    while (countryElem != nullptr && !elementTrouve && strcmp(countryElem->Name(), "province")==0) {
+        //ou recherche si la ville se trouve dans la province
+        city = getXmlelementFromName(countryElem, cityName);
+        //si la ville a été trouvée, on arrete la boucle. sinon, on passe a l'element suivant
+        if (city != nullptr) {
+            elementTrouve = true;
+        } else {
+            countryElem = countryElem->NextSiblingElement();
+        }
+    }
+    //retour de la varible city. Si la ville est trouvé, contient un pointeur vers l'element xml de la ville. sinon, vaut nullptr.
+    return city;
+}
+
+/**
+ * parcours de tous les enfant de XMLLevel, a la recherche de l'element ayant pour nom name
  * @param xmlLevel l'element XML dont on veux parcourir les enfants
  * @param name le nom de l'element que l'ont recherche
  * @return  renvoie l'element XML ayant pour nom name, nullptr sinon
@@ -397,7 +438,22 @@ XMLElement *Mondial::getXmlelementFromName(tinyxml2::XMLElement *xmlLevel, std::
     return child;
 }
 
+XMLElement *Mondial::getAbsoluteXmlelementFromNameRec(tinyxml2::XMLElement *xmlLevel, std::string name) const {
+    if (xmlLevel->FirstChildElement("name") != nullptr && strcmp(xmlLevel->FirstChildElement("name")->GetText(), name.c_str()) == 0 ) {
+        return xmlLevel;
+    } else if (xmlLevel->FirstChildElement() != nullptr) {
+        getAbsoluteXmlelementFromNameRec(xmlLevel->FirstChildElement(), name);
+    } else if (xmlLevel->NextSiblingElement() != nullptr){
+        getAbsoluteXmlelementFromNameRec(xmlLevel->NextSiblingElement(), name);
+    } else  if (xmlLevel->Parent() != nullptr && xmlLevel->Parent()->ToElement() != nullptr){
+        getAbsoluteXmlelementFromNameRec(xmlLevel->Parent(), name);
+    } else {
+        return nullptr;
+    }
+}
+
 /**
+ * parcours tous les enfant de xmllevel à la recherche d'un element dont l'attribut de nom attribute vaut id
  * @param xmlLevel l'element xml dont on veut parcourir les enfants
  * @param attribute l'attribut concerné par la recherche
  * @param id la valeur de l'attribut que l'ont recherche

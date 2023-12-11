@@ -89,7 +89,12 @@ private:
 
     XMLElement* getXmlelementFromAttribute(XMLElement* xmlLevel, string attribute, string id) const;
 
-    XMLElement* getCityXmlelementFromName(string cityName) const;
+    vector<string>* getCityInformationsFromName(string cityName) const;
+
+    XMLElement* getCityOfCountryXMLelementFromName(XMLElement* country, string cityName) const;
+
+    XMLElement* getAbsoluteXmlelementFromNameRec(XMLElement* xmlLevel, string name) const;
+
 
     void printProvinceFromCountryInProvinceList(XMLElement* country, vector<string> provinceCode) const;
 
