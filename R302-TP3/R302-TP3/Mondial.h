@@ -47,6 +47,10 @@ public:
 
     void printTempsExec() const;
 
+    void printReligionForCountry(string countryName) const;
+
+    void printHighestMountains(int minHeight) const;
+
     void Print();
 
     virtual ~Mondial();
@@ -86,15 +90,17 @@ private:
 
     XMLElement* getRiverXmlelementFromNameIter(string riverName) const;
 
-    XMLElement* getXmlelementFromNameRec(string name, string category= "") const;
+    XMLElement* getXmlelementFromNameRec(string name, XMLElement* begin= nullptr) const;
 
     XMLElement* getXmlelementFromNameRecWorker(XMLElement* xmlLevel, string name) const;
 
-    XMLElement* getXmlelementFromAttributeRec(string attribute, string id) const;
+    XMLElement* getXmlelementFromAttributeRec(string attribute, string id, XMLElement* begin= nullptr) const;
 
     XMLElement* getXmlelementFromAttributeRecWorker(XMLElement* xmlLevel, string attribute, string id) const;
 
     void printProvinceFromCountryInProvinceList(vector<string> provinceCode) const;
+
+    void printPercentage(int percentage) const;
 
     // Procédures de découpage des chaînes en mots
 

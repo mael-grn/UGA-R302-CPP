@@ -210,10 +210,35 @@ void testPrintIslandInformation(Mondial& theMondial) {
     cout << endl;
 }
 
+void testPrintReligons(Mondial& theMondial) {
+    cout << endl << "******************************" << endl;
+    cout << "*                            *" << endl;
+    cout << "*     Informations sur les   *" << endl;
+    cout << "*     Religions d'un pays    *" << endl;
+    cout << "******************************" << endl << endl;
+    theMondial.printReligionForCountry("France");
+    cout << endl;
+}
+
+void testPrintHighestMoutain(Mondial& theMondial) {
+    cout << endl << "******************************" << endl;
+    cout << "*                            *" << endl;
+    cout << "*   Plus hautes montagnes    *" << endl;
+    cout << "*                            *" << endl;
+    cout << "******************************" << endl << endl;
+    cout << "MONTAGNES AU DESSUS DE 8000 METRES : " << endl;
+    theMondial.printHighestMountains(8500);
+    cout << endl << "MONTAGNES AU DESSUS DE 10000 METRES : " << endl;
+    theMondial.printHighestMountains(10000);
+    cout << endl;
+}
+
 void testTempsExec(Mondial(& theMondial)) {
     cout << "TEST DU TEMP D'EXECUTION DE LA RECHERCHE" << endl;
     theMondial.printTempsExec();
 }
+
+
 
 int main() {
 
@@ -247,11 +272,14 @@ int main() {
     testPrintCountriesAndProvincesCrossedByRiver(theMondial);
     testPrintCityInformation(theMondial);
     testPrintIslandInformation(theMondial);
+    testPrintReligons(theMondial);
+    testPrintHighestMoutain(theMondial);
+
     testTempsExec(theMondial);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\nTEMPS D'EXECUTION TOTAL : " << duration.count() << "ms" << endl;
+    cout << "\nTEMPS D'EXECUTION TOTAL : " << duration.count() << " microseconds" << endl;
     
     return 0;
 }

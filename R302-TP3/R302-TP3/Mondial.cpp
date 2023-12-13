@@ -25,27 +25,8 @@ void Mondial::Print() {
 }
 
 /*
- * FOURNIE
+ * ----------------------------------------------------------------------------------------------------------------print
  */
-int Mondial::getNbAirports() const {
-    // initialisation du nombre d’aéroports
-    int nb = 0;
-    // accéder à <airportscategory>, c’est un fils de l'élément <racineMondial>
-    XMLElement* airportsCategory = racineMondial->FirstChildElement("airportscategory");
-    // parcours complet des fils de <airportscategory> en les comptants
-    // 1) accéder au premier fils <airport> de <airportscategory>
-    XMLElement* currentAirport = airportsCategory->FirstChildElement();
-    // 2) parcourir tous les <airport> qui sont des frères
-    while (currentAirport != nullptr) {
-        // un aéroport supplémentaire
-        nb = nb + 1;
-        // avancer au frère <airport> suivant de currentAirport
-        currentAirport = currentAirport->NextSiblingElement();
-    }
-    // currentAirport n’a plus de frère {currentAirport == nullptr}, c’est le dernier
-    return nb;
-}
-
 /*
  * FOURNIE
  */
@@ -72,6 +53,396 @@ void Mondial::printCountriesCode() const {
     // currentCountry n’a pas de frère {currentCountry == nullptr}, c’est fini
 }
 
+/**
+ * affichage des frontière d'un pays
+ * @param countryName le nom du pays dont on veux afficher les frontières
+ */
+void Mondial::printCountryBorders(string countryName) const {
+    //On recupere le pays de nom countryName
+    XMLElement* country = getXmlelementFromNameRec(countryName);
+    //si le pays n'existe pas, affichage d'un message approprié
+    if (country == nullptr) {
+        cout << "LE PAYS " + countryName + " EXISTE PAS !" << endl;
+        //si le pays existe
+    } else {
+        //on se deplace directement au premier element de nom "border"
+        XMLElement* countryElem = country->FirstChildElement("border");
+        //si le pays possede des frontiere :
+        if (countryElem != nullptr && strcmp(countryElem->Name(), "border")==0) {
+            //afficher un message appriprié
+            cout << "Les pays frontaliers de " + countryName + " sont :" << endl;
+            //afficher tous les pays frontaliers
+            while (countryElem != nullptr && strcmp(countryElem->Name(), "border")==0) {
+                //on recupere le pays, ayant pour code le code contenu dans l'element border
+                XMLElement* countryBorder = getCountryXmlelementFromCode(countryElem->Attribute("country"));
+                //si le pays existe, on ajoute son nom a la liste
+                if (countryBorder != nullptr) {
+                    cout << "\t- " << countryBorder->FirstChildElement("name")->GetText() << ", length : " << countryElem->Attribute("length") << " km" << endl;
+                }
+                //passage à l'element suivant
+                countryElem = countryElem->NextSiblingElement();
+            }
+            //si le pays n'a pas de pays frontaliers
+        } else {
+            //affichage d'un message approprié
+            cout << "Le pays " + countryName + " ne possede aucun pays frontaliers...";
+        }
+    }
+}
+
+/**
+ * afficher le nom des pays traversés par une rivière. Utilisation de l'attribut country.
+ * @param riverName le nom de la rivière dont on veux afficher les informations
+ */
+void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
+    //recuperer la riviere de nom riverName
+    XMLElement* river = getXmlelementFromNameRec(riverName);
+    //si la riviere est trouvée
+    if (river != nullptr) {
+        //affichage d'un message approprié
+        cout << "Pays traversés par : " << riverName << endl;
+        //recuperer les codes de pays
+        string pays = river->Attribute("country");
+        vector<string> paysLst;
+        split(pays, ' ', back_inserter(paysLst));
+        //affichage des pays
+        for (auto elem : paysLst) {
+            XMLElement* country = getCountryXmlelementFromCode(elem);
+            if (country != nullptr) {
+                cout << "\t- " << country->FirstChildElement("name")->GetText() << endl;
+            }
+        }
+        //affichage de la longueur du fleuve:
+        cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
+        //affichage du message si le fleuve n'est pas trouvé
+    } else {
+        cout << "le fleuve " << riverName << " existe pas !!" << endl;
+    }
+}
+
+/**
+ * afficher le nom des pays traversés par une rivière. Utilisation des balises located.
+ * @param riverName le nom de la rivière dont on veux afficher les informations
+ */
+void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const {
+    //recuperer la riviere de nom riverName
+    XMLElement* river = getXmlelementFromNameRec(riverName);
+    //si la riviere est trouvée
+    if (river != nullptr) {
+        //affichage d'un message approprié
+        cout << "Pays et provinces traversés par : " << riverName << endl;
+        //on recupere le premier fils de river ayant pour nom located
+        XMLElement* riverElem = river->FirstChildElement("located");
+        //si cet element existe, et que son nom est "located", affichage du pays
+        while (riverElem != nullptr && strcmp(riverElem->Name(), "located")==0) {
+            //affichage du pays correspondant au code pays contenu dans l'element located
+            //pour cela, on recupere le pays correspondant à ce code, et on affiche le texte contenu dans son premier element, qui corresponds à son nom
+            XMLElement* country = getCountryXmlelementFromCode(riverElem->Attribute("country"));
+            if (country != nullptr) {
+                cout << "\t- " << country->FirstChildElement("name")->GetText() << endl;
+            }
+            //passage a l'element suivant
+            riverElem = riverElem->NextSiblingElement();
+        }
+        //affichage de la longueur du fleuve:
+        cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
+        //affichage du message si le fleuve n'est pas trouvé
+    } else {
+        cout << "le fleuve " << riverName << " existe pas !!" << endl;
+    }
+}
+
+/**
+ * Permet d'afficher tout les pays traversés par une riviere, ainsi que les provinces des pays traversées par la rivière
+ * @param riverName le nom de la rivière dont on veux afficher les informations
+ */
+void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
+    //recuperer la riviere de nom countryname
+    XMLElement* riversCat = racineMondial->FirstChildElement("riverscategory");
+    XMLElement* river = getXmlelementFromNameRec(riverName, riversCat);
+    //si la riviere est trouvée
+    if (river != nullptr) {
+        //affichage d'un message approprié
+        cout << "Pays et provinces traversés par : " << riverName << endl;
+        //on recupere les pays traversés depuis l'attribut country
+        //il est necessaire de les recuperer depuis cet attribut, car certains pays peuvent ne pas apparaitre
+        //dans la balise located
+        vector<string> countryLst;
+        string countries = river->Attribute("country");
+        split(countries, ' ', back_inserter(countryLst));
+        //pour chaque code pays récupérés depuis l'attribut country
+        for (auto country : countryLst) {
+            //on recupere l'element XML du pays
+            XMLElement* countryElem = getCountryXmlelementFromCode(country);
+            //si celui ci a été trouvé
+            if (countryElem != nullptr) {
+                //on affiche le nom du pays
+                cout << "\t- " << countryElem->FirstChildElement("name")->GetText() << endl;
+                //on recupere la balise located de la rivere correspondant au pays.
+                //cette balise nous fournis les provinces de ce pays traversées par la rivière.
+                //Pour cela, on cherche, dans les balises de la rivière, celle ayant le code du pays pour son attribut country
+                XMLElement* locatedElem = getXmlelementFromAttributeRec("country", country, river);
+                //si la balise est trouvée, et que celle ci contient des provinces
+                if (locatedElem != nullptr && locatedElem->Attribute("province") != NULL) {
+                    //on recupere les provinces, et on les ajoutes dans une listes
+                    string provinces = locatedElem->Attribute("province");
+                    vector<string> provLst;
+                    split(provinces, ' ', back_inserter(provLst));
+                    //on affiche les provinces
+                    printProvinceFromCountryInProvinceList(provLst);
+                } else {
+                    cout << "\t\t* Aucune provinces traversées..." << endl;
+                }
+
+            } else {
+                cout << "\tERREUR : pays " << country << " non trouvé" << endl;
+            }
+        }
+        //affichage de la longueur du fleuve:
+        cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
+        //affichage du message si le fleuve n'est pas trouvé
+    } else {
+        cout << "le fleuve " << riverName << " existe pas !!" << endl;
+    }
+}
+
+/**
+ * Affiches certaines informations sur une ville en particuler
+ * @param cityName le nom de la ville dont on souhaite afficher les informations
+ */
+void Mondial::printCityInformation(string cityName) const {
+    XMLElement * countryCat = racineMondial->FirstChildElement("countriescategory");
+    XMLElement* city = getXmlelementFromNameRec(cityName, countryCat);
+    if (city == nullptr) {
+        cout << "la ville " << cityName << " existe pas..." << endl;
+    } else {
+        cout << cityName << " : " << endl;
+
+        XMLElement* country = nullptr;
+        if (city->Attribute("country") != NULL){
+            country = getCountryXmlelementFromCode(city->Attribute("country"));
+        }
+        XMLElement* province = nullptr;
+        if (city->Attribute("province") != NULL) {
+            province = getXmlelementFromAttributeRec("id", city->Attribute("province"));
+        }
+        //affichage du pays
+        if (country != nullptr && country->FirstChildElement("name") != nullptr) {
+            cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de pays..." << endl;
+        }
+        //affichage de la province
+        if (province != nullptr && province->FirstChildElement("name") != nullptr) {
+            cout << "\t- Province : " << province->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de province..." << endl;
+        }
+        //affichage de la latitude
+        if (city->FirstChildElement("latitude") != nullptr) {
+            cout << "\t- latitude : " << city->FirstChildElement("latitude")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de latitude..." << endl;
+        }
+        //affichage de la longitude
+        if (city->FirstChildElement("longitude") != nullptr) {
+            cout << "\t- longitude : " << city->FirstChildElement("longitude")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de longitude..." << endl;
+        }
+        //affichage de la derniere population renseignée
+        if (city->LastChildElement("population") != nullptr) {
+            cout << "\t- Population : " << city->LastChildElement("population")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville n'a pas de population renseignée population..." << endl;
+        }
+    }
+
+}
+
+/**
+ * Exemple de question additionnelle pour l'exercice 9 afficher toutes les informations disponibles
+ * dans Mondial concernant toutes les îles.
+ * On peut commencer par une île en particulier à partir de son nom
+ */
+void Mondial::printIslandsInformations(string islandName) const {
+    XMLElement* islandCat = racineMondial->FirstChildElement("islandscategory");
+    XMLElement* island = getXmlelementFromNameRec(islandName, islandCat);
+    if (island == nullptr) {
+        cout << "la ville " << islandName << " existe pas..." << endl;
+    } else {
+        cout << islandName << " : " << endl;
+
+        XMLElement* country = nullptr;
+        if (island->Attribute("country") != NULL){
+            country = getCountryXmlelementFromCode(island->Attribute("country"));
+        }
+        XMLElement* sea = nullptr;
+        if (island->Attribute("sea") != NULL) {
+            sea = getXmlelementFromAttributeRec("id", island->Attribute("sea"));
+        }
+        //affichage du pays
+        if (country != nullptr && country->FirstChildElement("name") != nullptr) {
+            cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ile ne possede pas de pays..." << endl;
+        }
+        //affichage de la province
+        if (sea != nullptr && sea->FirstChildElement("name") != nullptr) {
+            cout << "\t- Sea : " << sea->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ile ne possede pas de mer..." << endl;
+        }
+    }
+}
+
+/**
+ * Affiche des statistiques sur les religions d'un pays
+ * @param countryName le nom du pays dont on veut afficher les religions
+ */
+void Mondial::printReligionForCountry(string countryName) const {
+    XMLElement* country = getCountryXmlelementFromNameRec(countryName);
+    XMLElement* religionElement = nullptr;
+    if (country == nullptr) {
+        cout << "Le pays " << countryName << " existe pas...";
+    } else {
+        religionElement = country->FirstChildElement("religion");
+    }
+    if (religionElement == nullptr) {
+        cout << "Le pays " + countryName + " n'a pas de religions..." << endl;
+    } else {
+        cout << "Religions pour " << countryName << " : " << endl;
+    }
+    while (religionElement != nullptr && strcmp(religionElement->Name(),"religion")==0) {
+        cout << "\t" << religionElement->GetText() << endl << "\t";
+        int percentage = stoi(religionElement->Attribute("percentage"));
+        printPercentage(percentage);
+        cout << " " << percentage << "%" << endl;
+        religionElement = religionElement->NextSiblingElement();
+    }
+}
+
+/**
+ * On affiche toutes les montagnes existantes, dont l'altitude est supérieur ou egal à une altitude définit
+ * @param minHeight l'altitude minimum des montagnes à afficher
+ */
+void Mondial::printHighestMountains(int minHeight) const {
+    //on recupere l'element correspondant à mountainscategory
+    XMLElement* mountainCat = racineMondial->FirstChildElement("mountainscategory");
+    //on recupere le premier element enfant de mountaincategory (soit le premiere montagne)
+    XMLElement* mountainElem = mountainCat->FirstChildElement();
+    //variable indiquant si des montagnes à l'elevations en parametre existe
+    bool existMountain = false;
+    //boucle de parcours des montagnes
+    while (mountainElem != nullptr) {
+        //si la montagne a un attribut elevation, et si celui ci est superieur ou egal à minHeight
+        if (mountainElem->FirstChildElement("elevation") != nullptr &&
+            stoi(mountainElem->FirstChildElement("elevation")->GetText()) >= minHeight) {
+            //On affiche le nom de la montagne
+            cout << mountainElem->FirstChildElement("name")->GetText() << " : " << endl;
+            //si la montagne a un element located
+            if (mountainElem->FirstChildElement("located") != nullptr) {
+                //si located a un attribut country, on recherche l'element XML du pays, et on affiche son nom
+                XMLElement *country = getCountryXmlelementFromCode(
+                        mountainElem->FirstChildElement("located")->Attribute("country"));
+                if (country != nullptr) {
+                    cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
+                }
+                //si located a un attribut province, on recherche l'element XML de la province, et on affiche son nom
+                XMLElement *province = getXmlelementFromAttributeRec("id", mountainElem->FirstChildElement(
+                        "located")->Attribute("province"));
+                if (province != nullptr) {
+                    cout << "\t- Province : " << province->FirstChildElement("name")->GetText() << endl;
+                }
+            } else {
+                //affichage d'un message si la balise located n'est pas trouvée
+                cout << "\tLa montagne n'a pas de localisation" << endl;
+            }
+            //on recupere l'elevation de la montagne, et on l'affiche
+            string elevation = mountainElem->FirstChildElement("elevation")->GetText();
+            cout << "\t- Elevation : " << stoi(elevation) << endl;
+            //on indique qu'on a bien trouvé des montagnes a cette altitude
+            existMountain = true;
+        }
+        //passage a la montagne suivante
+        mountainElem = mountainElem->NextSiblingElement();
+    }
+    //si aucune montagne n'a été trouvée, affichage d'un message
+    if (!existMountain) {
+        cout << "Il n'existe aucune montagne au dessus de " << minHeight << "..." << endl;
+    }
+}
+
+/**
+ * affichage du temps d'executions des differentes methodes
+ */
+void Mondial::printTempsExec() const {
+    //temps de début
+    auto start_time = std::chrono::high_resolution_clock::now();
+    //recherche
+    getCountryXmlelementFromNameIter("United States");
+    //temps de fin
+    auto end_time = std::chrono::high_resolution_clock::now();
+    //durée d'exécution
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un pays iteratif par son nom : " << duration.count() << " microseconds" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getCountryXmlelementFromNameRec("United States");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un pays recursif par son nom : " << duration.count() << " microseconds" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getXmlelementFromNameRec("United States");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un element XML recursif par son nom (recherche dans tout le fichier) : " << duration.count() << " microseconds" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    XMLElement* countryCat = racineMondial->FirstChildElement("countriescategory");
+    getXmlelementFromNameRec("United States", countryCat);
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un element XML recursif par son nom (recherche dans une categorie) : " << duration.count() << " microseconds" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getCountryXmlelementFromCode("USA");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un pays iteratif par son code : " << duration.count() << " microseconds" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getXmlelementFromAttributeRec("car_code", "USA");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un element XML recursif par son code : " << duration.count() << " microseconds" << endl;
+}
+
+/*
+ * ---------------------------------------------------------------------------------------------------------------Getter
+ */
+/*
+ * FOURNIE
+ */
+int Mondial::getNbAirports() const {
+    // initialisation du nombre d’aéroports
+    int nb = 0;
+    // accéder à <airportscategory>, c’est un fils de l'élément <racineMondial>
+    XMLElement* airportsCategory = racineMondial->FirstChildElement("airportscategory");
+    // parcours complet des fils de <airportscategory> en les comptants
+    // 1) accéder au premier fils <airport> de <airportscategory>
+    XMLElement* currentAirport = airportsCategory->FirstChildElement();
+    // 2) parcourir tous les <airport> qui sont des frères
+    while (currentAirport != nullptr) {
+        // un aéroport supplémentaire
+        nb = nb + 1;
+        // avancer au frère <airport> suivant de currentAirport
+        currentAirport = currentAirport->NextSiblingElement();
+    }
+    // currentAirport n’a plus de frère {currentAirport == nullptr}, c’est le dernier
+    return nb;
+}
 
 /**
  *
@@ -111,6 +482,30 @@ int Mondial::getNbElemCat(const string categoryName) {
     return nb;
 }
 
+/**
+ *
+ * @param countryName le nom du pays dont on veux afficher des informations
+ * @return la dernière donnée concernant la population d'un pays. retourne -1 si le pays ne dispose d'aucune donnée.
+ */
+int Mondial::getCountryPopulationFromName(string countryName) const {
+    //on recupere l'element xml correspondant au pays countryName
+    XMLElement* country = getCountryXmlelementFromNameRec(countryName);
+    //si le pays n'existe pas, on retourne -1
+    if (country == nullptr) {
+        return -1;
+    } else {
+        //On recupere les données contenues dans la balises du dernier element de nom population.
+        //Les balises populations sont classé par ordre croissant, ainsi, la derniere balise étudiée sera forcement la plus recente.
+        XMLElement* countryElem = country->LastChildElement("population");
+        //initialisation de la variable contenant la population
+        int pop = stoi(countryElem->GetText());
+        return pop;
+    }
+}
+
+/*
+ * ----------------------------------------------------------------------------------------------------Getter XMLElement
+ */
 /**
  * boucle récursive, permettant de récuperer l'element XML pays ayant pour nom countryName
  * @param countryName le nom du pays que l'ont recherche
@@ -183,26 +578,6 @@ XMLElement* Mondial::getCountryXmlelementFromNameIter(string countryName) const 
     return currentElemCat;
 }
 
-/**
- *
- * @param countryName le nom du pays dont on veux afficher des informations
- * @return la dernière donnée concernant la population d'un pays. retourne -1 si le pays ne dispose d'aucune donnée.
- */
-int Mondial::getCountryPopulationFromName(string countryName) const {
-    //on recupere l'element xml correspondant au pays countryName
-    XMLElement* country = getCountryXmlelementFromNameRec(countryName);
-    //si le pays n'existe pas, on retourne -1
-    if (country == nullptr) {
-        return -1;
-    } else {
-        //On recupere les données contenues dans la balises du dernier element de nom population.
-        //Les balises populations sont classé par ordre croissant, ainsi, la derniere balise étudiée sera forcement la plus recente.
-        XMLElement* countryElem = country->LastChildElement("population");
-        //initialisation de la variable contenant la population
-        int pop = stoi(countryElem->GetText());
-        return pop;
-    }
-}
 
 /**
  * @param countryCode le code d'un pays dont on veux retrouver l'element XML
@@ -226,43 +601,6 @@ XMLElement* Mondial::getCountryXmlelementFromCode(string countryCode) const {
         }
     }
     return currentElemCat;
-}
-
-/**
- * affichage des frontière d'un pays
- * @param countryName le nom du pays dont on veux afficher les frontières
- */
-void Mondial::printCountryBorders(string countryName) const {
-    //On recupere le pays de nom countryName
-    XMLElement* country = getXmlelementFromNameRec(countryName);
-    //si le pays n'existe pas, affichage d'un message approprié
-    if (country == nullptr) {
-        cout << "LE PAYS " + countryName + " EXISTE PAS !" << endl;
-    //si le pays existe
-    } else {
-        //on se deplace directement au premier element de nom "border"
-        XMLElement* countryElem = country->FirstChildElement("border");
-        //si le pays possede des frontiere :
-        if (countryElem != nullptr && strcmp(countryElem->Name(), "border")==0) {
-            //afficher un message appriprié
-            cout << "Les pays frontaliers de " + countryName + " sont :" << endl;
-            //afficher tous les pays frontaliers
-            while (countryElem != nullptr && strcmp(countryElem->Name(), "border")==0) {
-                //on recupere le pays, ayant pour code le code contenu dans l'element border
-                XMLElement* countryBorder = getCountryXmlelementFromCode(countryElem->Attribute("country"));
-                //si le pays existe, on ajoute son nom a la liste
-                if (countryBorder != nullptr) {
-                    cout << "\t- " << countryBorder->FirstChildElement("name")->GetText() << ", length : " << countryElem->Attribute("length") << " km" << endl;
-                }
-                //passage à l'element suivant
-                countryElem = countryElem->NextSiblingElement();
-            }
-        //si le pays n'a pas de pays frontaliers
-        } else {
-            //affichage d'un message approprié
-            cout << "Le pays " + countryName + " ne possede aucun pays frontaliers...";
-        }
-    }
 }
 
 /**
@@ -291,172 +629,16 @@ XMLElement* Mondial::getRiverXmlelementFromNameIter(string riverName) const {
 }
 
 /**
- * afficher le nom des pays traversés par une rivière. Utilisation de l'attribut country.
- * @param riverName le nom de la rivière dont on veux afficher les informations
- */
-void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
-    //recuperer la riviere de nom riverName
-    XMLElement* river = getXmlelementFromNameRec(riverName);
-    //si la riviere est trouvée
-    if (river != nullptr) {
-        //affichage d'un message approprié
-        cout << "Pays traversés par : " << riverName << endl;
-        //recuperer les codes de pays
-        string pays = river->Attribute("country");
-        vector<string> paysLst;
-        split(pays, ' ', back_inserter(paysLst));
-        //affichage des pays
-        for (auto elem : paysLst) {
-            XMLElement* country = getCountryXmlelementFromCode(elem);
-            if (country != nullptr) {
-                cout << "\t- " << country->FirstChildElement("name")->GetText() << endl;
-            }
-        }
-        //affichage de la longueur du fleuve:
-        cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
-    //affichage du message si le fleuve n'est pas trouvé
-    } else {
-        cout << "le fleuve " << riverName << " existe pas !!" << endl;
-    }
-}
-
-/**
- * afficher le nom des pays traversés par une rivière. Utilisation des balises located.
- * @param riverName le nom de la rivière dont on veux afficher les informations
- */
-void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const {
-    //recuperer la riviere de nom riverName
-    XMLElement* river = getXmlelementFromNameRec(riverName);
-    //si la riviere est trouvée
-    if (river != nullptr) {
-        //affichage d'un message approprié
-        cout << "Pays et provinces traversés par : " << riverName << endl;
-        //on recupere le premier fils de river ayant pour nom located
-        XMLElement* riverElem = river->FirstChildElement("located");
-        //si cet element existe, et que son nom est "located", affichage du pays
-        while (riverElem != nullptr && strcmp(riverElem->Name(), "located")==0) {
-            //affichage du pays correspondant au code pays contenu dans l'element located
-            //pour cela, on recupere le pays correspondant à ce code, et on affiche le texte contenu dans son premier element, qui corresponds à son nom
-            XMLElement* country = getCountryXmlelementFromCode(riverElem->Attribute("country"));
-            if (country != nullptr) {
-                cout << "\t- " << country->FirstChildElement("name")->GetText() << endl;
-            }
-            //passage a l'element suivant
-            riverElem = riverElem->NextSiblingElement();
-        }
-        //affichage de la longueur du fleuve:
-        cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
-        //affichage du message si le fleuve n'est pas trouvé
-    } else {
-        cout << "le fleuve " << riverName << " existe pas !!" << endl;
-    }
-}
-
-/**
- * Permet d'afficher tout les pays traversés par une riviere, ainsi que les provinces des pays traversées par la rivière
- * @param riverName le nom de la rivière dont on veux afficher les informations
- */
-void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
-    //recuperer la riviere de nom countryname
-    XMLElement* river = getXmlelementFromNameRec(riverName);
-    //si la riviere est trouvée
-    if (river != nullptr) {
-        //affichage d'un message approprié
-        cout << "Pays et provinces traversés par : " << riverName << endl;
-        //on recupere le premier fils de river ayant pour nom located
-        XMLElement* riverElem = river->FirstChildElement("located");
-        //si cet element existe, et que son nom est "located", affichage du pays
-        while (riverElem != nullptr && strcmp(riverElem->Name(), "located")==0) {
-            //recuperer les provinces traversées
-            string provinces = riverElem->Attribute("province");
-            vector<string> provLst;
-            split(provinces, ' ', back_inserter(provLst));
-            //on recupere l'element XML du pays traversé
-            XMLElement* countryCrossed = getCountryXmlelementFromCode(riverElem->Attribute("country"));
-            //affichage du pays
-            if (countryCrossed != nullptr) {
-                cout << "\t- " << countryCrossed->FirstChildElement("name")->GetText() << endl;
-            }
-            //affichage des provinces
-            printProvinceFromCountryInProvinceList(provLst);
-            //passage a l'element suivant de la riviere
-            riverElem = riverElem->NextSiblingElement();
-        }
-        //affichage de la longueur du fleuve:
-        cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
-        //affichage du message si le fleuve n'est pas trouvé
-    } else {
-        cout << "le fleuve " << riverName << " existe pas !!" << endl;
-    }
-}
-
-/*
- * A COMPLETER
- */
-void Mondial::printCityInformation(string cityName) const {
-    XMLElement* city = getXmlelementFromNameRec(cityName, "pays");
-    if (city == nullptr) {
-        cout << "la ville " << cityName << " existe pas..." << endl;
-    } else {
-        cout << cityName << " : " << endl;
-
-        XMLElement* country = nullptr;
-        if (city->Attribute("country") != NULL){
-            country = getCountryXmlelementFromCode(city->Attribute("country"));
-        }
-        XMLElement* province = nullptr;
-        if (city->Attribute("province") != NULL) {
-            province = getXmlelementFromAttributeRec("id", city->Attribute("province"));
-        }
-        //affichage du pays
-        if (country != nullptr && country->FirstChildElement("name") != nullptr) {
-            cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ville ne possede pas de pays..." << endl;
-        }
-        //affichage de la province
-        if (province != nullptr && province->FirstChildElement("name") != nullptr) {
-            cout << "\t- Province : " << province->FirstChildElement("name")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ville ne possede pas de province..." << endl;
-        }
-        //affichage de la latitude
-        if (city->FirstChildElement("latitude") != nullptr) {
-            cout << "\t- latitude : " << city->FirstChildElement("latitude")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ville ne possede pas de latitude..." << endl;
-        }
-        //affichage de la longitude
-        if (city->FirstChildElement("longitude") != nullptr) {
-            cout << "\t- longitude : " << city->FirstChildElement("longitude")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ville ne possede pas de longitude..." << endl;
-        }
-        //affichage de la derniere population renseignée
-        if (city->LastChildElement("population") != nullptr) {
-            cout << "\t- Population : " << city->LastChildElement("population")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ville n'a pas de population renseignée population..." << endl;
-        }
-    }
-
-}
-
-/**
  * programme recursif, permettant de rechercher dans le fichier xml n'importe quel attribut a n'importe quel niveau ayant
  * pour nom "name".
  * @param name le nom de ce que l'ont recherche
  * @param category facultatif. Correspond à une categorie specifique dans laquelle on veux chercher. Utile si l'element apparait dans plusieurs catégories.
  * @return l'element xml dont le nom est name, nullptr sinon
  */
-XMLElement *Mondial::getXmlelementFromNameRec(string name, string category) const {
+XMLElement* Mondial::getXmlelementFromNameRec(string name, XMLElement* begin) const {
     //on recupere la racine du document
-
-    XMLElement* begin;
-    if (category == "") {
+    if (begin == nullptr) {
         begin = racineMondial->FirstChildElement();
-    } else {
-        begin = racineMondial->FirstChildElement(decod_category.at(category).c_str());
     }
     //demarrage de la recherche recursive
     return getXmlelementFromNameRecWorker(begin, name);
@@ -490,9 +672,11 @@ XMLElement *Mondial::getXmlelementFromNameRecWorker(XMLElement *xmlLevel, string
  * @param name le nom de ce que l'ont recherche
  * @return l'element xml dont le nom est name, nullptr sinon
  */
-XMLElement *Mondial::getXmlelementFromAttributeRec(std::string attribute, std::string id) const {
+XMLElement *Mondial::getXmlelementFromAttributeRec(std::string attribute, std::string id, XMLElement* begin) const {
     //on recupere la racine du document
-    XMLElement* begin = racineMondial->FirstChildElement();
+    if (begin == nullptr) {
+        begin = racineMondial->FirstChildElement();
+    }
     //demarrage de la recherche recursive
     return getXmlelementFromAttributeRecWorker(begin,attribute, id);
 }
@@ -518,6 +702,9 @@ XMLElement *Mondial::getXmlelementFromAttributeRecWorker(tinyxml2::XMLElement *x
     }
 }
 
+/*
+ * ---------------------------------------------------------------------------------------------------------------Outils
+ */
 /**
  * affiche le nom des provinces d'un pays, donc le code se trouve dans la liste provinceCode
  * @param country le pays dont on veux afficher les provinces
@@ -535,90 +722,22 @@ void Mondial::printProvinceFromCountryInProvinceList(vector<std::string> provinc
     }
 }
 
-/**
- * affichage du temps d'executions des differentes methodes
- */
-void Mondial::printTempsExec() const {
-    //temps de début
-    auto start_time = std::chrono::high_resolution_clock::now();
-    //recherche
-    getCountryXmlelementFromNameIter("United States");
-    //temps de fin
-    auto end_time = std::chrono::high_resolution_clock::now();
-    //durée d'exécution
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\t- Recherche d'un pays iteratif par son nom : " << duration.count() << "ms" << endl;
-
-    start_time = std::chrono::high_resolution_clock::now();
-    getCountryXmlelementFromNameRec("United States");
-    end_time = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\t- Recherche d'un pays recursif par son nom : " << duration.count() << "ms" << endl;
-
-    start_time = std::chrono::high_resolution_clock::now();
-    getXmlelementFromNameRec("United States");
-    end_time = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\t- Recherche d'un element XML recursif par son nom (recherche dans tout le fichier) : " << duration.count() << "ms" << endl;
-
-    start_time = std::chrono::high_resolution_clock::now();
-    getXmlelementFromNameRec("United States", "pays");
-    end_time = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\t- Recherche d'un element XML recursif par son nom (recherche dans une categorie) : " << duration.count() << "ms" << endl;
-
-    start_time = std::chrono::high_resolution_clock::now();
-    getCountryXmlelementFromCode("USA");
-    end_time = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\t- Recherche d'un pays iteratif par son code : " << duration.count() << "ms" << endl;
-
-    start_time = std::chrono::high_resolution_clock::now();
-    getXmlelementFromAttributeRec("car_code", "USA");
-    end_time = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    cout << "\t- Recherche d'un element XML recursif par son code : " << duration.count() << "ms" << endl;
-}
 
 /**
- * Exemple de question additionnelle pour l'exercice 9 afficher toutes les informations disponibles
- * dans Mondial concernant toutes les îles.
- * On peut commencer par une île en particulier à partir de son nom
+ * affiche une barre, correspondant à un certain pourcentage
+ * @param percentage le pourcentage à afficher
  */
-void Mondial::printIslandsInformations(string islandName) const {
-    XMLElement* island = getXmlelementFromNameRec(islandName, "île");
-    if (island == nullptr) {
-        cout << "la ville " << islandName << " existe pas..." << endl;
-    } else {
-        cout << islandName << " : " << endl;
-
-        XMLElement* country = nullptr;
-        if (island->Attribute("country") != NULL){
-            country = getCountryXmlelementFromCode(island->Attribute("country"));
-        }
-        XMLElement* sea = nullptr;
-        if (island->Attribute("sea") != NULL) {
-            sea = getXmlelementFromAttributeRec("id", island->Attribute("sea"));
-        }
-        //affichage du pays
-        if (country != nullptr && country->FirstChildElement("name") != nullptr) {
-            cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ile ne possede pas de pays..." << endl;
-        }
-        //affichage de la province
-        if (sea != nullptr && sea->FirstChildElement("name") != nullptr) {
-            cout << "\t- Sea : " << sea->FirstChildElement("name")->GetText() << endl;
-        } else {
-            cout << "\t- Cette ile ne possede pas de mer..." << endl;
-        }
+void Mondial::printPercentage(int percentage) const {
+    cout << "[";
+    for (int i=0; i<percentage; i++) {
+        cout << "|";
     }
+    cout << "]";
 }
 
 /*
  * Méthodes de service fournies
  */
-
 template<typename Out>
 void Mondial::split(string& s, char delim, Out result) const {
     stringstream ss(s);
