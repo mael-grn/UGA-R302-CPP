@@ -43,8 +43,9 @@ public:
     
     void printCityInformation(string cityName) const;
     
-    void printIslandsInformations() const;
+    void printIslandsInformations(string islandName) const;
 
+    void printTempsExec() const;
 
     void Print();
 
@@ -85,18 +86,15 @@ private:
 
     XMLElement* getRiverXmlelementFromNameIter(string riverName) const;
 
-    XMLElement* getXmlelementFromName(XMLElement* xmlLevel, string name) const;
+    XMLElement* getXmlelementFromNameRec(string name, string category= "") const;
 
-    XMLElement* getXmlelementFromAttribute(XMLElement* xmlLevel, string attribute, string id) const;
+    XMLElement* getXmlelementFromNameRecWorker(XMLElement* xmlLevel, string name) const;
 
-    vector<string>* getCityInformationsFromName(string cityName) const;
+    XMLElement* getXmlelementFromAttributeRec(string attribute, string id) const;
 
-    XMLElement* getCityOfCountryXMLelementFromName(XMLElement* country, string cityName) const;
+    XMLElement* getXmlelementFromAttributeRecWorker(XMLElement* xmlLevel, string attribute, string id) const;
 
-    XMLElement* getAbsoluteXmlelementFromNameRec(XMLElement* xmlLevel, string name) const;
-
-
-    void printProvinceFromCountryInProvinceList(XMLElement* country, vector<string> provinceCode) const;
+    void printProvinceFromCountryInProvinceList(vector<string> provinceCode) const;
 
     // Procédures de découpage des chaînes en mots
 

@@ -6,7 +6,7 @@
  */
 
 #include "Mondial.h"
-
+#include "chrono"
 
 #include <iostream>     // pour cout
 #include <iomanip>      // pour setw()
@@ -78,12 +78,12 @@ void Mondial::printCountriesCode() const {
  * @return le nombre d'element appartenant à la catégorie desert
  */
 int Mondial::getNbDeserts() const {
+    XMLElement* debug = racineMondial->FirstChildElement("riverscategory")->FirstChildElement();
+    cout << "debug : " << debug->Name() << " : " << debug->Attribute("id") << endl;
     //decompte du nombre de desert
     int nb =0;
-
     XMLElement* desert = racineMondial->FirstChildElement("desertscategory");
     XMLElement* currentDesert = desert->FirstChildElement();
-
     //tant qu'il existe des desert, incrementer le compteur
     while (currentDesert != nullptr) {
         nb+=1;
@@ -103,7 +103,6 @@ int Mondial::getNbElemCat(const string categoryName) {
     //decode_category permet de traduire le nom de la categorie. c_str permet de convertir le type string en tableau de caractere
     XMLElement* elemCat = racineMondial->FirstChildElement(decod_category.at(categoryName).c_str());
     XMLElement* currentElemCat = elemCat->FirstChildElement();
-
     //tant qu'il existe un element, incrementer le compteur
     while (currentElemCat != nullptr) {
         nb+=1;
@@ -128,11 +127,8 @@ XMLElement* Mondial::getCountryXmlelementFromNameRec(string countryName) const {
     XMLElement* countriesCategory = racineMondial->FirstChildElement("countriescategory");
     //utilisation du worker, a partir du premier enfant de la "balise" countries category. Celui ci correspond au premier pays de la liste de pays.
     country = getCountryXmlelementFromNameRecWorker(countriesCategory->FirstChildElement(), countryName);
-
     return country;
 }
-
-
 XMLElement* Mondial::getCountryXmlelementFromNameRecWorker(XMLElement* currentCountryElement, string countryName) const {
     //Premier point d'arret : ou trouve le pays (le premier element de la balise country correspond au nom du pays, donc on la recupere et on la compare)
     if (currentCountryElement->FirstChildElement("name")->GetText() == countryName) {
@@ -145,7 +141,6 @@ XMLElement* Mondial::getCountryXmlelementFromNameRecWorker(XMLElement* currentCo
         //boucle recursive, avec passage en parametre du prochain pays
         return getCountryXmlelementFromNameRecWorker(currentCountryElement->NextSiblingElement(), countryName);
     }
-
 }
 
 /**
@@ -154,14 +149,13 @@ XMLElement* Mondial::getCountryXmlelementFromNameRecWorker(XMLElement* currentCo
  */
 string Mondial::getCountryCodeFromName(string countryName) const throw (PrecondVioleeExcep) {
     //recuperer l'objet XMLElement correspondant au pays countryName
-    XMLElement* country = getCountryXmlelementFromNameIter(countryName);
+    XMLElement* country = getXmlelementFromNameRec(countryName);
     //si le pays n'existe pas, throw une exception
     if (country == nullptr) {
         throw PrecondVioleeExcep("Le pays \"" + countryName + "\" n'existe pas...");
     }
     //retourne le code du pays
     return country->Attribute("car_code");
-
 }
 
 /**
@@ -170,10 +164,23 @@ string Mondial::getCountryCodeFromName(string countryName) const throw (PrecondV
  * @return pointeur sur l'élément <country> dont la valeur du fils <name> est égal à countryName, nullprt sinon
  */
 XMLElement* Mondial::getCountryXmlelementFromNameIter(string countryName) const {
-    //on recupere l'element (balise) "countriescategory". Celle contient tous les pays.
-    XMLElement* countriesCategory = racineMondial->FirstChildElement("countriescategory");
-    //premier enfant de la "balise" countries category. Celui ci correspond au premier pays de la liste de pays.
-    return getAbsoluteXmlelementFromNameRec(countriesCategory, countryName);
+    //on recupere l'element racine
+    XMLElement* elemCat = racineMondial->FirstChildElement("countriescategory");
+    //on recupere le premier element de la categorie
+    XMLElement* currentElemCat = elemCat->FirstChildElement();
+    //variable permettant d'arreter la boucle quand l'element est trouve
+    bool elemTrouve = false;
+    //tant qu'il y a un prochain element, et que l'element n'est pas trouvé
+    while (currentElemCat != nullptr && !elemTrouve) {
+        //si l'element correspond au critere, alors on arrete la boucle
+        if ( strcmp(currentElemCat->FirstChildElement("name")->GetText(), countryName.c_str())==0){
+            elemTrouve = true;
+            //sinon, on passe a l'element
+        } else {
+            currentElemCat = currentElemCat->NextSiblingElement();
+        }
+    }
+    return currentElemCat;
 }
 
 /**
@@ -202,9 +209,23 @@ int Mondial::getCountryPopulationFromName(string countryName) const {
  * @return l'élément XML dont le code correspond à celui en paramètre.
  */
 XMLElement* Mondial::getCountryXmlelementFromCode(string countryCode) const {
-    //on recupere l'element (balise) "countriescategory". Celle contient tous les pays.
-    XMLElement* countriesCategory = racineMondial->FirstChildElement("countriescategory");
-    return getXmlelementFromAttribute(countriesCategory, "car_code", countryCode);
+    //on recupere l'element racine
+    XMLElement* elemCat = racineMondial->FirstChildElement("countriescategory");
+    //on recupere le premier element de la categorie
+    XMLElement* currentElemCat = elemCat->FirstChildElement();
+    //variable permettant d'arreter la boucle quand l'element est trouve
+    bool elemTrouve = false;
+    //tant qu'il y a un prochain element, et que l'element n'est pas trouvé
+    while (currentElemCat != nullptr && !elemTrouve) {
+        //si l'element correspond au critere, alors on arrete la boucle
+        if ( strcmp(currentElemCat->Attribute("car_code"), countryCode.c_str())==0){
+            elemTrouve = true;
+            //sinon, on passe a l'element
+        } else {
+            currentElemCat = currentElemCat->NextSiblingElement();
+        }
+    }
+    return currentElemCat;
 }
 
 /**
@@ -213,7 +234,7 @@ XMLElement* Mondial::getCountryXmlelementFromCode(string countryCode) const {
  */
 void Mondial::printCountryBorders(string countryName) const {
     //On recupere le pays de nom countryName
-    XMLElement* country = getCountryXmlelementFromNameIter(countryName);
+    XMLElement* country = getXmlelementFromNameRec(countryName);
     //si le pays n'existe pas, affichage d'un message approprié
     if (country == nullptr) {
         cout << "LE PAYS " + countryName + " EXISTE PAS !" << endl;
@@ -236,7 +257,7 @@ void Mondial::printCountryBorders(string countryName) const {
                 //passage à l'element suivant
                 countryElem = countryElem->NextSiblingElement();
             }
-        //si le pays n'a pas de pays frontalier
+        //si le pays n'a pas de pays frontaliers
         } else {
             //affichage d'un message approprié
             cout << "Le pays " + countryName + " ne possede aucun pays frontaliers...";
@@ -250,9 +271,23 @@ void Mondial::printCountryBorders(string countryName) const {
  * @return l'élément XML dont le nom correspond à celui de la rivière.
  */
 XMLElement* Mondial::getRiverXmlelementFromNameIter(string riverName) const {
-    //on recupere l'element (balise) "riverscategory". Celle contient tous les pays.
-    XMLElement* riversCategory = racineMondial->FirstChildElement("riverscategory");
-    return getXmlelementFromName(riversCategory, riverName);
+    //on recupere l'element racine
+    XMLElement* elemCat = racineMondial->FirstChildElement("riverscategory");
+    //on recupere le premier element de la categorie
+    XMLElement* currentElemCat = elemCat->FirstChildElement();
+    //variable permettant d'arreter la boucle quand l'element est trouve
+    bool elemTrouve = false;
+    //tant qu'il y a un prochain element, et que l'element n'est pas trouvé
+    while (currentElemCat != nullptr && !elemTrouve) {
+        //si l'element correspond au critere, alors on arrete la boucle
+        if ( strcmp(currentElemCat->FirstChildElement("name")->GetText(), riverName.c_str())==0){
+            elemTrouve = true;
+            //sinon, on passe a l'element
+        } else {
+            currentElemCat = currentElemCat->NextSiblingElement();
+        }
+    }
+    return currentElemCat;
 }
 
 /**
@@ -261,7 +296,7 @@ XMLElement* Mondial::getRiverXmlelementFromNameIter(string riverName) const {
  */
 void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
     //recuperer la riviere de nom riverName
-    XMLElement* river = getRiverXmlelementFromNameIter(riverName);
+    XMLElement* river = getXmlelementFromNameRec(riverName);
     //si la riviere est trouvée
     if (river != nullptr) {
         //affichage d'un message approprié
@@ -272,7 +307,10 @@ void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
         split(pays, ' ', back_inserter(paysLst));
         //affichage des pays
         for (auto elem : paysLst) {
-            cout << "\t- " << getCountryXmlelementFromCode(elem)->FirstChildElement("name")->GetText() << endl;
+            XMLElement* country = getCountryXmlelementFromCode(elem);
+            if (country != nullptr) {
+                cout << "\t- " << country->FirstChildElement("name")->GetText() << endl;
+            }
         }
         //affichage de la longueur du fleuve:
         cout << "sa longueur est de " << river->FirstChildElement("length")->GetText() << " km" << endl;
@@ -287,8 +325,8 @@ void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
  * @param riverName le nom de la rivière dont on veux afficher les informations
  */
 void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const {
-    //recuperer la riviere de nom countryname
-    XMLElement* river = getRiverXmlelementFromNameIter(riverName);
+    //recuperer la riviere de nom riverName
+    XMLElement* river = getXmlelementFromNameRec(riverName);
     //si la riviere est trouvée
     if (river != nullptr) {
         //affichage d'un message approprié
@@ -299,7 +337,10 @@ void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const 
         while (riverElem != nullptr && strcmp(riverElem->Name(), "located")==0) {
             //affichage du pays correspondant au code pays contenu dans l'element located
             //pour cela, on recupere le pays correspondant à ce code, et on affiche le texte contenu dans son premier element, qui corresponds à son nom
-            cout << "\t- " << getCountryXmlelementFromCode(riverElem->Attribute("country"))->FirstChildElement("name")->GetText() << endl;
+            XMLElement* country = getCountryXmlelementFromCode(riverElem->Attribute("country"));
+            if (country != nullptr) {
+                cout << "\t- " << country->FirstChildElement("name")->GetText() << endl;
+            }
             //passage a l'element suivant
             riverElem = riverElem->NextSiblingElement();
         }
@@ -317,7 +358,7 @@ void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const 
  */
 void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
     //recuperer la riviere de nom countryname
-    XMLElement* river = getRiverXmlelementFromNameIter(riverName);
+    XMLElement* river = getXmlelementFromNameRec(riverName);
     //si la riviere est trouvée
     if (river != nullptr) {
         //affichage d'un message approprié
@@ -333,9 +374,11 @@ void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
             //on recupere l'element XML du pays traversé
             XMLElement* countryCrossed = getCountryXmlelementFromCode(riverElem->Attribute("country"));
             //affichage du pays
-            cout << "\t- " << countryCrossed->FirstChildElement("name")->GetText() << endl;
+            if (countryCrossed != nullptr) {
+                cout << "\t- " << countryCrossed->FirstChildElement("name")->GetText() << endl;
+            }
             //affichage des provinces
-            printProvinceFromCountryInProvinceList(countryCrossed, provLst);
+            printProvinceFromCountryInProvinceList(provLst);
             //passage a l'element suivant de la riviere
             riverElem = riverElem->NextSiblingElement();
         }
@@ -351,130 +394,128 @@ void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
  * A COMPLETER
  */
 void Mondial::printCityInformation(string cityName) const {
-    /*
-     * A COMPLETER
-     */
-}
+    XMLElement* city = getXmlelementFromNameRec(cityName, "pays");
+    if (city == nullptr) {
+        cout << "la ville " << cityName << " existe pas..." << endl;
+    } else {
+        cout << cityName << " : " << endl;
 
-/**
- * permet de retrouver une ville parmis tous les pays
- * @param cityName le nom de la ville recherchée
- * @return un pointeur vers un élément XML de la ville
- */
-vector<string> *Mondial::getCityInformationsFromName(std::string cityName) const {
-    //variable pour arreter la boucle lorsque l'element est trouve
-    bool elementTrouve = false;
-    //liste de retour. Liste de tuple, contenant les infos de la ville (ex = name : paris)
-    vector<tuple<string, string>> cityInfo;
-    //on recupere l'element (balise) "countriescategory". Celle contient tous les pays.
-    XMLElement* countriesCategory = racineMondial->FirstChildElement("countriescategory");
-    XMLElement* country = countriesCategory->FirstChildElement();
-    //parcours des pays, tant qu'on a pas trouvé ce qu'on cherche
-    while (country != nullptr && !elementTrouve) {
-        //recuperer la ville dans le pays
-        XMLElement* city = getCityOfCountryXMLelementFromName(country, cityName);
-        //si la ville a été trouvée dans le pays
-        if (city != nullptr) {
-            //ajouter les informations de la ville au tableau de résultat
-            //conversion du resultat en string avant de l'ajouter, car sinon la concatenation est impossible
-            cityInfo.emplace_back("name", string(city->FirstChildElement("name")->GetText()));
-            cityInfo.emplace_back("country", string(country->FirstChildElement("name")->GetText()));
-            cityInfo.emplace_back("latitude", string(city->FirstChildElement("latitude")->GetText()));
-            cityInfo.emplace_back("longitude", string(city->FirstChildElement("longitude")->GetText()));
-            cityInfo.emplace_back("population", string(city->LastChildElement("population")->GetText()));
+        XMLElement* country = nullptr;
+        if (city->Attribute("country") != NULL){
+            country = getCountryXmlelementFromCode(city->Attribute("country"));
         }
-    }
-}
-
-/**
- * verifie si une ville se trouve dans un pays en particulier
- * @param country  l'element XML correspondant au pays dans laquelle on recherche une ville
- * @param cityName le nom de la ville que l'ont recherche
- * @return l'element xml de la ville recherché si celle ci est trouvée, nullptr sinon
- */
-XMLElement* Mondial::getCityOfCountryXMLelementFromName(tinyxml2::XMLElement *country, std::string cityName) const {
-    //variable indiquant si l'element est trouvé
-    bool elementTrouve = false;
-    //premier element enfant du pays ayant pour nom province
-    XMLElement* countryElem = country->FirstChildElement("province");
-    //variable qui contiendra la ville si celle ci est trouvée. sinon contient nullptr
-    XMLElement* city;
-    //on parcours tous les elements de type province, tant qu'on a pas trouvé ce qu'on cherche
-    while (countryElem != nullptr && !elementTrouve && strcmp(countryElem->Name(), "province")==0) {
-        //ou recherche si la ville se trouve dans la province
-        city = getXmlelementFromName(countryElem, cityName);
-        //si la ville a été trouvée, on arrete la boucle. sinon, on passe a l'element suivant
-        if (city != nullptr) {
-            elementTrouve = true;
+        XMLElement* province = nullptr;
+        if (city->Attribute("province") != NULL) {
+            province = getXmlelementFromAttributeRec("id", city->Attribute("province"));
+        }
+        //affichage du pays
+        if (country != nullptr && country->FirstChildElement("name") != nullptr) {
+            cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
         } else {
-            countryElem = countryElem->NextSiblingElement();
+            cout << "\t- Cette ville ne possede pas de pays..." << endl;
+        }
+        //affichage de la province
+        if (province != nullptr && province->FirstChildElement("name") != nullptr) {
+            cout << "\t- Province : " << province->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de province..." << endl;
+        }
+        //affichage de la latitude
+        if (city->FirstChildElement("latitude") != nullptr) {
+            cout << "\t- latitude : " << city->FirstChildElement("latitude")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de latitude..." << endl;
+        }
+        //affichage de la longitude
+        if (city->FirstChildElement("longitude") != nullptr) {
+            cout << "\t- longitude : " << city->FirstChildElement("longitude")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville ne possede pas de longitude..." << endl;
+        }
+        //affichage de la derniere population renseignée
+        if (city->LastChildElement("population") != nullptr) {
+            cout << "\t- Population : " << city->LastChildElement("population")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ville n'a pas de population renseignée population..." << endl;
         }
     }
-    //retour de la varible city. Si la ville est trouvé, contient un pointeur vers l'element xml de la ville. sinon, vaut nullptr.
-    return city;
+
 }
 
 /**
- * parcours de tous les enfant de XMLLevel, a la recherche de l'element ayant pour nom name
- * @param xmlLevel l'element XML dont on veux parcourir les enfants
- * @param name le nom de l'element que l'ont recherche
- * @return  renvoie l'element XML ayant pour nom name, nullptr sinon
+ * programme recursif, permettant de rechercher dans le fichier xml n'importe quel attribut a n'importe quel niveau ayant
+ * pour nom "name".
+ * @param name le nom de ce que l'ont recherche
+ * @param category facultatif. Correspond à une categorie specifique dans laquelle on veux chercher. Utile si l'element apparait dans plusieurs catégories.
+ * @return l'element xml dont le nom est name, nullptr sinon
  */
-XMLElement *Mondial::getXmlelementFromName(tinyxml2::XMLElement *xmlLevel, std::string name) const {
-    //variable pour arreter la boucle lorsque l'element est trouve
-    bool elementTrouve = false;
-    //premier element enfant de l'element XMl en parametre
-    XMLElement* child = xmlLevel->FirstChildElement();
-    //parcours des elements enfant, jusqu'a trouver ce qu'on cherche
-    while (child != nullptr && !elementTrouve) {
-        //si l'element est trouvé, on arrete la boucle
-        if (child->FirstChildElement("name")->GetText() == name) {
-            elementTrouve = true;
-        } else {
-            //sinon on continue
-            child = child->NextSiblingElement();
-        }
-    }
-    return child;
-}
+XMLElement *Mondial::getXmlelementFromNameRec(string name, string category) const {
+    //on recupere la racine du document
 
-XMLElement *Mondial::getAbsoluteXmlelementFromNameRec(tinyxml2::XMLElement *xmlLevel, std::string name) const {
+    XMLElement* begin;
+    if (category == "") {
+        begin = racineMondial->FirstChildElement();
+    } else {
+        begin = racineMondial->FirstChildElement(decod_category.at(category).c_str());
+    }
+    //demarrage de la recherche recursive
+    return getXmlelementFromNameRecWorker(begin, name);
+}
+XMLElement *Mondial::getXmlelementFromNameRecWorker(XMLElement *xmlLevel, string name) const {
+
+    //si l'element courant a un nom, et si celui ci correspond a celui que nous cherchons, alors on s'arrete
     if (xmlLevel->FirstChildElement("name") != nullptr && strcmp(xmlLevel->FirstChildElement("name")->GetText(), name.c_str()) == 0 ) {
         return xmlLevel;
-    } else if (xmlLevel->FirstChildElement() != nullptr) {
-        getAbsoluteXmlelementFromNameRec(xmlLevel->FirstChildElement(), name);
-    } else if (xmlLevel->NextSiblingElement() != nullptr){
-        getAbsoluteXmlelementFromNameRec(xmlLevel->NextSiblingElement(), name);
-    } else  if (xmlLevel->Parent() != nullptr && xmlLevel->Parent()->ToElement() != nullptr){
-        getAbsoluteXmlelementFromNameRec(xmlLevel->Parent(), name);
     } else {
-        return nullptr;
+        //sinon, declaration de l'element suivant
+        XMLElement *next;
+        //si l'element suivant existe, alors on descend d'un niveau.
+        if (xmlLevel->FirstChildElement() != nullptr) {
+            //On descend d'un niveau
+            next = getXmlelementFromNameRecWorker(xmlLevel->FirstChildElement(), name);
+        }
+        //si l'element voisin existe, et si le fait de descendre n'a rien rapporté
+        if (xmlLevel->NextSiblingElement() != nullptr && next == nullptr) {
+            //on passe à l'element suivant
+            next = getXmlelementFromNameRecWorker(xmlLevel->NextSiblingElement(), name);
+        }
+        return next;
     }
 }
 
 /**
- * parcours tous les enfant de xmllevel à la recherche d'un element dont l'attribut de nom attribute vaut id
- * @param xmlLevel l'element xml dont on veut parcourir les enfants
- * @param attribute l'attribut concerné par la recherche
- * @param id la valeur de l'attribut que l'ont recherche
- * @return le premier element XML dont attribut correspond a la valeur id
+ * programme recursif, permettant de rechercher dans le fichier xml n'importe quel element a n'importe quel niveau ayant
+ * pour identifiant id à l'attribut de nom attribute
+ * @param xmlLevel la racine du document
+ * @param name le nom de ce que l'ont recherche
+ * @return l'element xml dont le nom est name, nullptr sinon
  */
-XMLElement *Mondial::getXmlelementFromAttribute(tinyxml2::XMLElement *xmlLevel, std::string attribute, string id) const {
-    //variable pour arreter la boucle lorsque l'element est trouve
-    bool elementTrouve = false;
-    //premier element enfant de l'element XMl en parametre
-    XMLElement* child = xmlLevel->FirstChildElement();
-    //parcours des elements enfant, jusqu'a trouver ce qu'on cherche
-    while (child != nullptr && !elementTrouve) {
-        //si l'element est trouvé, on arrete la boucle
-        if (child->Attribute(attribute.c_str()) != NULL && child->Attribute(attribute.c_str()) == id) {
-            elementTrouve = true;
-        } else {
-            //sinon on continue
-            child = child->NextSiblingElement();
+XMLElement *Mondial::getXmlelementFromAttributeRec(std::string attribute, std::string id) const {
+    //on recupere la racine du document
+    XMLElement* begin = racineMondial->FirstChildElement();
+    //demarrage de la recherche recursive
+    return getXmlelementFromAttributeRecWorker(begin,attribute, id);
+}
+XMLElement *Mondial::getXmlelementFromAttributeRecWorker(tinyxml2::XMLElement *xmlLevel, std::string attribute,
+                                                         std::string id) const {
+    //si l'element courant a un attribut attribute, et si celui ci correspond a celui que nous cherchons, alors on s'arrete
+    if (xmlLevel->Attribute(attribute.c_str()) != NULL && strcmp(xmlLevel->Attribute(attribute.c_str()),id.c_str())==0) {
+        return xmlLevel;
+    } else {
+        //sinon, declaration de l'element suivant
+        XMLElement *next;
+        //Recherche dans les niveaux enfants.
+        if (xmlLevel->FirstChildElement() != nullptr) {
+            //On descend d'un niveau
+            next = getXmlelementFromAttributeRecWorker(xmlLevel->FirstChildElement(), attribute, id);
         }
+        //si l'element voisin existe, et si le fait de descendre n'a rien rapporté
+        if (xmlLevel->NextSiblingElement() != nullptr && next == nullptr) {
+            //on passe à l'element suivant
+            next = getXmlelementFromAttributeRecWorker(xmlLevel->NextSiblingElement(), attribute, id);
+        }
+        return next;
     }
-    return child;
 }
 
 /**
@@ -482,11 +523,11 @@ XMLElement *Mondial::getXmlelementFromAttribute(tinyxml2::XMLElement *xmlLevel, 
  * @param country le pays dont on veux afficher les provinces
  * @param provinceCode la liste des provinces qu'on veux afficher
  */
-void Mondial::printProvinceFromCountryInProvinceList(tinyxml2::XMLElement *country, vector<std::string> provinceCode) const {
+void Mondial::printProvinceFromCountryInProvinceList(vector<std::string> provinceCode) const {
     //boucle affichage. parcours chaque provinces traversée
     for (const auto& provCode : provinceCode) {
         //on recupere l'element xml de la province du pays, correspondant à la province traversée
-        XMLElement* countryProv = getXmlelementFromAttribute(country, "id", provCode);
+        XMLElement* countryProv = getXmlelementFromAttributeRec("id", provCode);
         //si la province est trouvée, alors afficher son nom
         if (countryProv != nullptr) {
             cout << "\t\t* " << countryProv->FirstChildElement("name")->GetText() << endl;
@@ -495,14 +536,83 @@ void Mondial::printProvinceFromCountryInProvinceList(tinyxml2::XMLElement *count
 }
 
 /**
+ * affichage du temps d'executions des differentes methodes
+ */
+void Mondial::printTempsExec() const {
+    //temps de début
+    auto start_time = std::chrono::high_resolution_clock::now();
+    //recherche
+    getCountryXmlelementFromNameIter("United States");
+    //temps de fin
+    auto end_time = std::chrono::high_resolution_clock::now();
+    //durée d'exécution
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un pays iteratif par son nom : " << duration.count() << "ms" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getCountryXmlelementFromNameRec("United States");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un pays recursif par son nom : " << duration.count() << "ms" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getXmlelementFromNameRec("United States");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un element XML recursif par son nom (recherche dans tout le fichier) : " << duration.count() << "ms" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getXmlelementFromNameRec("United States", "pays");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un element XML recursif par son nom (recherche dans une categorie) : " << duration.count() << "ms" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getCountryXmlelementFromCode("USA");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un pays iteratif par son code : " << duration.count() << "ms" << endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    getXmlelementFromAttributeRec("car_code", "USA");
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    cout << "\t- Recherche d'un element XML recursif par son code : " << duration.count() << "ms" << endl;
+}
+
+/**
  * Exemple de question additionnelle pour l'exercice 9 afficher toutes les informations disponibles
  * dans Mondial concernant toutes les îles.
  * On peut commencer par une île en particulier à partir de son nom
  */
-void Mondial::printIslandsInformations() const {
-    /*
-     * A COMPLETER
-     */
+void Mondial::printIslandsInformations(string islandName) const {
+    XMLElement* island = getXmlelementFromNameRec(islandName, "île");
+    if (island == nullptr) {
+        cout << "la ville " << islandName << " existe pas..." << endl;
+    } else {
+        cout << islandName << " : " << endl;
+
+        XMLElement* country = nullptr;
+        if (island->Attribute("country") != NULL){
+            country = getCountryXmlelementFromCode(island->Attribute("country"));
+        }
+        XMLElement* sea = nullptr;
+        if (island->Attribute("sea") != NULL) {
+            sea = getXmlelementFromAttributeRec("id", island->Attribute("sea"));
+        }
+        //affichage du pays
+        if (country != nullptr && country->FirstChildElement("name") != nullptr) {
+            cout << "\t- Country : " << country->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ile ne possede pas de pays..." << endl;
+        }
+        //affichage de la province
+        if (sea != nullptr && sea->FirstChildElement("name") != nullptr) {
+            cout << "\t- Sea : " << sea->FirstChildElement("name")->GetText() << endl;
+        } else {
+            cout << "\t- Cette ile ne possede pas de mer..." << endl;
+        }
+    }
 }
 
 /*
