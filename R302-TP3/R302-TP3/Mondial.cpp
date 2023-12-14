@@ -544,7 +544,7 @@ XMLElement* Mondial::getCountryXmlelementFromNameRecWorker(XMLElement* currentCo
  */
 string Mondial::getCountryCodeFromName(string countryName) const throw (PrecondVioleeExcep) {
     //recuperer l'objet XMLElement correspondant au pays countryName
-    XMLElement* country = getXmlelementFromNameRec(countryName);
+    XMLElement* country = getCountryXmlelementFromNameRec(countryName);
     //si le pays n'existe pas, throw une exception
     if (country == nullptr) {
         throw PrecondVioleeExcep("Le pays \"" + countryName + "\" n'existe pas...");
@@ -650,7 +650,7 @@ XMLElement *Mondial::getXmlelementFromNameRecWorker(XMLElement *xmlLevel, string
         return xmlLevel;
     } else {
         //sinon, declaration de l'element suivant
-        XMLElement *next;
+        XMLElement *next= nullptr;
         //si l'element suivant existe, alors on descend d'un niveau.
         if (xmlLevel->FirstChildElement() != nullptr) {
             //On descend d'un niveau
@@ -687,7 +687,7 @@ XMLElement *Mondial::getXmlelementFromAttributeRecWorker(tinyxml2::XMLElement *x
         return xmlLevel;
     } else {
         //sinon, declaration de l'element suivant
-        XMLElement *next;
+        XMLElement *next = nullptr;
         //Recherche dans les niveaux enfants.
         if (xmlLevel->FirstChildElement() != nullptr) {
             //On descend d'un niveau
