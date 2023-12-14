@@ -54,8 +54,8 @@ void Mondial::printCountriesCode() const {
 }
 
 /**
- * affichage des frontière d'un pays
- * @param countryName le nom du pays dont on veux afficher les frontières
+ * Affichage des frontière d'un pays
+ * @param countryName corresponds au nom du pays dont on veux afficher les frontières
  */
 void Mondial::printCountryBorders(string countryName) const {
     //On recupere le pays de nom countryName
@@ -91,8 +91,8 @@ void Mondial::printCountryBorders(string countryName) const {
 }
 
 /**
- * afficher le nom des pays traversés par une rivière. Utilisation de l'attribut country.
- * @param riverName le nom de la rivière dont on veux afficher les informations
+ * Affichage du nom des pays traversés par une rivière. Utilisation de l'attribut country
+ * @param riverName corresponds au nom de la rivière dont on veux afficher les informations
  */
 void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
     //recuperer la riviere de nom riverName
@@ -121,8 +121,8 @@ void Mondial::printAllCountriesCrossedByRiver(string riverName) const {
 }
 
 /**
- * afficher le nom des pays traversés par une rivière. Utilisation des balises located.
- * @param riverName le nom de la rivière dont on veux afficher les informations
+ * Afficher le nom des pays traversés par une rivière. Utilisation des balises located
+ * @param riverName corresponds au nom de la rivière dont on veux afficher les informations
  */
 void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const {
     //recuperer la riviere de nom riverName
@@ -153,8 +153,8 @@ void Mondial::printCountriesWithProvincesCrossedByRiver(string riverName) const 
 }
 
 /**
- * Permet d'afficher tout les pays traversés par une riviere, ainsi que les provinces des pays traversées par la rivière
- * @param riverName le nom de la rivière dont on veux afficher les informations
+ * Affichage de tout les pays traversés par une riviere, ainsi que les provinces des pays traversées par la rivière
+ * @param riverName corresponds au nom de la rivière dont on veux afficher les informations
  */
 void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
     //recuperer la riviere de nom countryname
@@ -207,8 +207,8 @@ void Mondial::printCountriesAndProvincesCrossedByRiver(string riverName) const {
 }
 
 /**
- * Affiches certaines informations sur une ville en particuler
- * @param cityName le nom de la ville dont on souhaite afficher les informations
+ * Affiche certaines informations sur une ville
+ * @param cityName corresponds au nom de la ville dont on souhaite afficher les informations
  */
 void Mondial::printCityInformation(string cityName) const {
     XMLElement * countryCat = racineMondial->FirstChildElement("countriescategory");
@@ -261,9 +261,8 @@ void Mondial::printCityInformation(string cityName) const {
 }
 
 /**
- * Exemple de question additionnelle pour l'exercice 9 afficher toutes les informations disponibles
- * dans Mondial concernant toutes les îles.
- * On peut commencer par une île en particulier à partir de son nom
+ * Question additionelle de l'exercice 9. Affichage des informations d'une île à partir de son nom
+ * @param islandName corresponds au nom de l'île
  */
 void Mondial::printIslandsInformations(string islandName) const {
     XMLElement* islandCat = racineMondial->FirstChildElement("islandscategory");
@@ -297,8 +296,8 @@ void Mondial::printIslandsInformations(string islandName) const {
 }
 
 /**
- * Affiche des statistiques sur les religions d'un pays
- * @param countryName le nom du pays dont on veut afficher les religions
+ * Question additionelle de l'exercice 9. Affichage des statistiques sur les religions d'un pays
+ * @param countryName corresponds au nom du pays dont on veut afficher les religions
  */
 void Mondial::printReligionForCountry(string countryName) const {
     XMLElement* country = getCountryXmlelementFromNameRec(countryName);
@@ -323,8 +322,9 @@ void Mondial::printReligionForCountry(string countryName) const {
 }
 
 /**
- * On affiche toutes les montagnes existantes, dont l'altitude est supérieur ou egal à une altitude définit
- * @param minHeight l'altitude minimum des montagnes à afficher
+ * Question additionelle de l'exercice 9. Affichage de toutes les montagnes existantes, dont l'altitude est supérieur
+ * ou egal à une valeur définit
+ * @param minHeight corresponds à l'altitude minimum des montagnes à afficher
  */
 void Mondial::printHighestMountains(int minHeight) const {
     //on recupere l'element correspondant à mountainscategory
@@ -374,7 +374,7 @@ void Mondial::printHighestMountains(int minHeight) const {
 }
 
 /**
- * affichage du temps d'executions des differentes methodes
+ * Affichage du temps d'executions des differentes methodes, à des fin d'optimisation
  */
 void Mondial::printTempsExec() const {
     //temps de début
@@ -445,7 +445,6 @@ int Mondial::getNbAirports() const {
 }
 
 /**
- *
  * @return le nombre d'element appartenant à la catégorie desert
  */
 int Mondial::getNbDeserts() const {
@@ -465,7 +464,7 @@ int Mondial::getNbDeserts() const {
 }
 
 /**
- * @param categoryName le nom de la catégorie dont on cherche des informations
+ * @param categoryName corresponds au nom de la catégorie dont on cherche des informations
  * @return le nombre d'elements par catéories
  */
 int Mondial::getNbElemCat(const string categoryName) {
@@ -483,8 +482,7 @@ int Mondial::getNbElemCat(const string categoryName) {
 }
 
 /**
- *
- * @param countryName le nom du pays dont on veux afficher des informations
+ * @param countryName corresponds au nom du pays dont on veux afficher des informations
  * @return la dernière donnée concernant la population d'un pays. retourne -1 si le pays ne dispose d'aucune donnée.
  */
 int Mondial::getCountryPopulationFromName(string countryName) const {
@@ -507,8 +505,8 @@ int Mondial::getCountryPopulationFromName(string countryName) const {
  * ----------------------------------------------------------------------------------------------------Getter XMLElement
  */
 /**
- * boucle récursive, permettant de récuperer l'element XML pays ayant pour nom countryName
- * @param countryName le nom du pays que l'ont recherche
+ * Boucle récursive, permettant de récuperer l'element XML pays ayant pour nom countryName
+ * @param countryName corresponds au nom du pays que l'ont recherche
  * @return un pointeur sur un element XML, correspondant au pays recherché.
  */
 XMLElement* Mondial::getCountryXmlelementFromNameRec(string countryName) const {
@@ -539,7 +537,8 @@ XMLElement* Mondial::getCountryXmlelementFromNameRecWorker(XMLElement* currentCo
 }
 
 /**
- * @param countryName le nom du pays dont on cherche les informations
+ * Recherche du code d'un pays à partir de son nom. Recherche recursive à partir de getCountryXmlelementFromNameRec
+ * @param countryName corresponds au nom du pays dont on cherche les informations
  * @return le code du pays, dont le nom a été passé en parametre.
  */
 string Mondial::getCountryCodeFromName(string countryName) const throw (PrecondVioleeExcep) {
@@ -555,7 +554,7 @@ string Mondial::getCountryCodeFromName(string countryName) const throw (PrecondV
 
 /**
  * élément <country> d'un pays identifié par son nom countryName
- * @param countryName
+ * @param countryName corresponds au nom du pays dont on cherche les informations
  * @return pointeur sur l'élément <country> dont la valeur du fils <name> est égal à countryName, nullprt sinon
  */
 XMLElement* Mondial::getCountryXmlelementFromNameIter(string countryName) const {
@@ -578,9 +577,8 @@ XMLElement* Mondial::getCountryXmlelementFromNameIter(string countryName) const 
     return currentElemCat;
 }
 
-
 /**
- * @param countryCode le code d'un pays dont on veux retrouver l'element XML
+ * @param countryCode corresponds au code d'un pays dont on veux retrouver l'element XML
  * @return l'élément XML dont le code correspond à celui en paramètre.
  */
 XMLElement* Mondial::getCountryXmlelementFromCode(string countryCode) const {
@@ -605,7 +603,7 @@ XMLElement* Mondial::getCountryXmlelementFromCode(string countryCode) const {
 
 /**
  *
- * @param riverName le nom de la rivière, dont on veux retrouver l'element XML.
+ * @param riverName corresponds au nom de la rivière, dont on veux retrouver l'element XML.
  * @return l'élément XML dont le nom correspond à celui de la rivière.
  */
 XMLElement* Mondial::getRiverXmlelementFromNameIter(string riverName) const {

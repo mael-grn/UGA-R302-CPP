@@ -251,10 +251,10 @@ int main() {
     //Mondial theMondial("/Users/hb/Documents/ Enseignement/R3.02/TP_Sols/R302-TP3-Correction-compile/mondial_HB.xml");
 
     // pour les étudiants
-    Mondial theMondial("/users/info/pub/s3/R302/mondial_HB.xml");
+    //Mondial theMondial("/users/info/pub/s3/R302/mondial_HB.xml");
 
     // chemin d'accès au fichier XML via windows
-    //Mondial theMondial("C:\\Users\\maelg\\OneDrive\\Documents\\Documents\\IUT\\S3\\R3.02\\R302-TP3\\R302-TP3\\mondial_HB.xml");
+    Mondial theMondial("C:\\Users\\maelg\\OneDrive\\Documents\\Documents\\IUT\\S3\\R3.02\\R302-TP3\\R302-TP3\\mondial_HB.xml");
 
     //theMondial.Print();
 
