@@ -227,7 +227,7 @@ void testPrintHighestMoutain(Mondial& theMondial) {
     cout << "*                            *" << endl;
     cout << "******************************" << endl << endl;
     cout << "MONTAGNES AU DESSUS DE 8000 METRES : " << endl;
-    theMondial.printHighestMountains(8500);
+    theMondial.printHighestMountains(8000);
     cout << endl << "MONTAGNES AU DESSUS DE 10000 METRES : " << endl;
     theMondial.printHighestMountains(10000);
     cout << endl;
