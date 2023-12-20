@@ -19,51 +19,44 @@ void afficheVecteur(const vector<T> v) {
 
 template<class T>
 void minMaxIter(const vector<T> v, T &min, T &max, int &nbComp) {
-    // {v.size()≥ 1} => {min = plus petite valeur de v,
-    //                   max = plus grande valeur de v,
-    //                   nbcomp = nombre de comparaisons impliquant au moins un élément de v}
-
-    for (auto val : v) {
-        if (val < min) {
-            min = val;
-        } else if (val > max) {
-            max=val;
+    if (v.empty()) {
+        min = -1;
+        max = -1;
+    } else {
+        min = v.at(0);
+        max = v.at(0);
+        nbComp == 0;
+        for (auto val : v) {
+            if (val < min) {
+                min = val;
+            } else if (val > max) {
+                max = val;
+            }
+            nbComp++;
         }
-        nbComp++;
     }
 
 }
 
 template<class T>
 void minMaxRec(const vector<T>& v, int inf, int sup, T &min, T &max, int &nbComp) {
-    // {v.size()≥ 1} => {min = plus petite valeur de v sur l'intervalle [inf..sup],
-    //                   max = plus grande valeur de v sur l'intervalle [inf..sup],
-    //                   nbcomp = nombre de comparaisons impliquant au moins un élément de v}
-    /*
-    if (!v.empty()) {
-        nbComp++;
-        if (v[v.size()-1] > max) {
-            max=v[v.size()-1];
-        } else if (v[v.size()-1] < min) {
-            min=v[v.size()-1];
-        }
-        vector<T> temp = v;
-        temp.pop_back();
-        minMaxRec(temp, inf, sup, min, max, nbComp);
-    }
-    */
-    if (inf == sup){
-        min=v[inf];
-        max=v[sup];
-    } else {
-
+    if (v.at(inf) < min) {
+        min = v.at(inf);
+    } else if (v.at(inf) > max){
+        max = v.at(inf);
     }
 
-    minMaxRec(v, inf, sup/2-1, min, max, nbComp);
-    minMaxRec(v, sup/2, sup-1, min, max, nbComp);
+    if (v.at(sup) < min) {
+        min = v.at(sup);
+    } else if (v.at(sup) > max){
+        max = v.at(sup);
+    }
 
+    nbComp++;
 
-
+    if (inf < sup) {
+        minMaxRec(v, inf+1, sup-1, min, max, nbComp);
+    }
 }
 
 
@@ -116,6 +109,8 @@ void testMinMaxDR() {
     vector<int> v = {10};
     inf = 0;
     sup = v.size()-1;
+    min = v.at(inf);
+    max = v.at(inf);
     minMaxRec(v, inf, sup, min, max, nbComp);
     cout << "v : ";
     afficheVecteur(v);
