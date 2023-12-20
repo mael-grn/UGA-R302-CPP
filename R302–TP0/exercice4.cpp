@@ -31,10 +31,23 @@ template<class T>
 T partage(vector<T> &v, const int inf, const int sup) {
 // {v.size()≥ 1} => {résultat = valeur du médian tel que défini dans l’étape 1)
 //                   et mise en place du plus petit et du plus grand dans v telles que définies dans l’étape 2)}
+    T realInf = min(v.at(sup), min(v.at(inf), v.at((inf+sup)/2)));
+    T realSup = max(v.at(sup), max(v.at(inf), v.at((inf+sup)/2)));
+    T realMid;
 
-    /*
-     * À COMPLETER
-     */
+    if (v.at(inf) > realInf && v.at(inf) < realSup) {
+        realMid = v.at(inf);
+    } else if (v.at((inf+sup)/2) > realInf && v.at((inf+sup)/2) < realSup) {
+        realMid = v.at((inf+sup)/2);
+    } else {
+        realMid = v.at(sup);
+    }
+    cout << "inf " << inf << ":" << v.at(inf) << " devient " << realInf << " mid " << (inf+sup)/2 << ":" << v.at((inf+sup)/2) << " devient " << realMid << " sup " << sup << ":" << v.at(sup) << " devient " << realSup << endl;
+    v.at(inf) = realInf;
+    v.at((inf+sup)/2) = realMid;
+    v.at(sup) = realSup;
+
+    return realMid;
 
 }
 
@@ -47,14 +60,19 @@ void insertionSort(vector<T> &a) {
 
 }
 
+template<class T>
+void triR302Worker(vector<T> &v, const int inf, const int sup) {
+    if (inf < sup) {
+        partage(v, inf, sup);
+        triR302Worker(v, inf, sup-1);
+    }
+}
 
 template<class T>
 void triR302(vector<T> &v, const int inf, const int sup) {
-
-    /*
-     * À COMPLETER
-     */
-
+    if (inf < sup && sup <= v.size()) {
+        triR302Worker(v, inf, sup);
+    }
 }
 
 void testTriR302() {
